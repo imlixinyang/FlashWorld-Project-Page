@@ -1,4 +1,332 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FlashWorld - Gallery</title>
+  <link rel="icon" type="image/x-icon" href="static/images/favicon.ico">
+  <link rel="stylesheet" href="static/css/bulma.min.css">
+  <link rel="stylesheet" href="static/css/index.css">
+  <link rel="preload" href="static/css/fontawesome.all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+  <noscript>
+    <link rel="stylesheet" href="static/css/fontawesome.all.min.css">
+  </noscript>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <script defer src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="static/js/fontawesome.all.min.js"></script>
+  <script defer src="static/js/index.js"></script>
+  <style>
+    .gallery-container { max-width: 1200px; margin: 0 auto; }
+    /* slider viewport */
+    #gallery-grid { position: relative; overflow: hidden; width: 100%; }
+    /* sliding track */
+    .pages-track { display: flex; will-change: transform; transition: transform 600ms ease; }
+    /* each logical page */
+    .page { flex: 0 0 100%; padding: 0.25rem; }
+    /* 2x3 grid inside each page */
+    .grid-2x3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.25rem; }
+    .grid-2x3 .video-item { width: 100%; }
+    .grid-2x3 .video-item video { width: 100% !important; height: auto !important; }
+    .pagination-dots { display:flex; justify-content:center; align-items:center; gap:0.5rem; margin-top:1.25rem; }
+    .pagination-dots .dot { width:10px; height:10px; border-radius:50%; background:#cbd5e1; cursor:pointer; transition: var(--transition); }
+    .pagination-dots .dot.active { background: var(--primary-color); transform: scale(1.2); }
+    @media (max-width: 1024px) { .grid-2x3 { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 640px) { .grid-2x3 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <button class="scroll-to-top" onclick="scrollToTop()" title="Scroll to top" aria-label="Scroll to top">
+    <i class="fas fa-chevron-up"></i>
+  </button>
 
+  <section class="hero is-small is-light" style="width:100vw; height:100vh;">
+    <div class="hero-body">
+      <div class="container gallery-container">
+        <h2 class="title is-3" style="text-align:center;">Gallery</h2>
+        <div id="gallery-grid">
+          <div class="pages-track" id="pagesTrack"></div>
+        </div>
+        <div class="pagination-dots" id="paginationDots"></div>
+      </div>
+    </div>
+  </section>
+
+  <div id="global-tooltip">
+    <div class="tooltip-content">
+      <img class="tooltip-image" src="" alt="条件图像" style="display: none;">
+      <p class="tooltip-text"></p>
+    </div>
+  </div>
+<!-- 
+  <footer class="footer">
+    <div class="container">
+      <div class="columns is-centered">
+        <div class="column is-8">
+          <div class="content" style="font-size: 0.9em;">
+            <p>
+              This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer> -->
+
+  <script>
+    // Collect all gallery items from existing snippet file content
+    const galleryItemsHTML = `
+${/* Inject existing video items copied from gallery.html source */''}
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0541_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0541_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0019_edit_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0019_edit_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0540_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0540_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0043_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0043_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0508.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0508.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0055_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0055_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0534_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0534_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0525.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0525.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0038_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0038_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0003_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0003_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0532.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0532.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0549.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0549.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0040_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0040_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0002_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0002_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0535_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0535_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0276_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0276_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0253_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0253_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0537_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0537_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0047_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0047_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0547_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0547_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0646.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0646.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0507.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0507.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0548_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0548_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0561.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0561.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0359_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0359_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0538_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0538_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0588.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0588.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0029_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0029_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0547.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0547.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0531_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0531_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0654.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0654.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0552_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0552_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0630.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0630.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0355_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0355_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0001_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0001_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0040_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0040_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0261_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0261_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0366_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0366_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0352_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0352_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0047_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0047_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0064_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0064_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0584.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0584.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0534.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0534.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0518.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0518.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0000_edit_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0000_edit_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0000_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0000_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0251_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0251_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0059_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0059_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0002_edit_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0002_edit_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0361_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0361_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0363_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0363_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0567.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0567.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0545.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0545.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0063_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0063_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0041_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0041_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0369_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0369_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0636.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0636.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0532_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0532_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0642.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0642.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0000_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0000_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0543_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0543_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0062_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0062_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0003_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0003_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0546.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0546.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0262_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0262_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0264_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0264_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0049_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0049_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0533_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0533_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0004_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0004_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0037_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0037_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0001_edit_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0001_edit_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0245_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0245_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0024_2_edit_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0024_2_edit_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0372_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0372_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0005_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0005_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv/0517.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv/0517.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0539_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0539_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0257_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0257_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0244_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0244_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0544_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_stylized/0544_stylized.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/realestate_sr/0263_sr.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/realestate_sr/0263_sr.mp4" type="video/mp4"></video></div>
+<div class="video-item" data-condition-image="./static/gallery/dl3dv_stylized/0025_stylized.png" data-condition-text=""><video poster="" controls muted loop height="100%" preload="metadata"><source src="./static/gallery/dl3dv_stylized/0025_stylized.mp4" type="video/mp4"></video></div>
+`;
+
+    const tempContainer = document.createElement('div');
+    tempContainer.innerHTML = galleryItemsHTML.trim();
+    const allItems = Array.from(tempContainer.querySelectorAll('.video-item'));
+
+    const pageSize = 6; // 2 rows x 3 columns
+    const totalPages = Math.max(1, Math.ceil(allItems.length / pageSize));
+
+    const grid = document.getElementById('gallery-grid');
+    const track = document.getElementById('pagesTrack');
+    const dotsContainer = document.getElementById('paginationDots');
+    let autoTimer = null;
+
+    function buildDots() {
+      dotsContainer.innerHTML = '';
+      for (let i = 1; i <= totalPages; i++) {
+        const dot = document.createElement('span');
+        dot.className = 'dot';
+        dot.setAttribute('role', 'button');
+        dot.setAttribute('aria-label', 'Go to page ' + i);
+        dot.addEventListener('click', function() {
+          // Smoothly slide to the chosen page index (1..totalPages)
+          goToPage(i, true);
+          restartAutoAdvance();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+        dotsContainer.appendChild(dot);
+      }
+    }
+
+    function renderPage(page) {
+      // kept for compatibility; sliding renderer used instead
+    }
+
+    // Build sliding pages
+    const pages = [];
+    for (let p = 0; p < totalPages; p++) {
+      const start = p * pageSize;
+      const end = start + pageSize;
+      const pageEl = document.createElement('div');
+      pageEl.className = 'page';
+      const gridEl = document.createElement('div');
+      gridEl.className = 'grid-2x3';
+      allItems.slice(start, end).forEach(item => {
+        const cloned = item.cloneNode(true);
+        gridEl.appendChild(cloned);
+      });
+      pageEl.appendChild(gridEl);
+      pages.push(pageEl);
+    }
+
+    // Prepare infinite track with clones
+    function mountTrack() {
+      track.innerHTML = '';
+      if (pages.length === 0) return;
+      const firstClone = pages[0].cloneNode(true);
+      const lastClone = pages[pages.length - 1].cloneNode(true);
+      track.appendChild(lastClone);
+      pages.forEach(p => track.appendChild(p));
+      track.appendChild(firstClone);
+    }
+
+    // Sliding state
+    let currentIndex = 1; // start at first real page (after lastClone)
+    let slideWidth = 0;
+
+    function updateSlideWidth() {
+      slideWidth = grid.clientWidth;
+      track.style.transition = 'none';
+      track.style.transform = 'translateX(' + (-currentIndex * slideWidth) + 'px)';
+      void track.offsetWidth;
+      track.style.transition = 'transform 600ms ease';
+    }
+
+    function setActiveDotByIndex(index) {
+      const effectivePage = ((index - 1 + totalPages) % totalPages) + 1;
+      const dots = dotsContainer.querySelectorAll('.dot');
+      dots.forEach((d, idx) => {
+        if (idx === effectivePage - 1) d.classList.add('active');
+        else d.classList.remove('active');
+      });
+    }
+
+    function afterSlideAdjust() {
+      if (currentIndex === 0) {
+        currentIndex = totalPages;
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(' + (-currentIndex * slideWidth) + 'px)';
+        void track.offsetWidth;
+        track.style.transition = 'transform 600ms ease';
+      } else if (currentIndex === totalPages + 1) {
+        currentIndex = 1;
+        track.style.transition = 'none';
+        track.style.transform = 'translateX(' + (-currentIndex * slideWidth) + 'px)';
+        void track.offsetWidth;
+        track.style.transition = 'transform 600ms ease';
+      }
+      setActiveDotByIndex(currentIndex);
+      if (typeof initializeVideoTooltips === 'function') {
+        initializeVideoTooltips();
+      }
+      if (typeof window.observeVideosForAutoplay === 'function') {
+        window.observeVideosForAutoplay('#gallery-grid video');
+      }
+    }
+
+    function goToIndex(index, withTransition) {
+      currentIndex = index;
+      if (!withTransition) track.style.transition = 'none';
+      track.style.transform = 'translateX(' + (-currentIndex * slideWidth) + 'px)';
+      if (!withTransition) {
+        void track.offsetWidth;
+        track.style.transition = 'transform 600ms ease';
+      }
+    }
+
+    function goToPage(pageNumber, withTransition) {
+      goToIndex(pageNumber, withTransition !== false);
+    }
+
+    track.addEventListener('transitionend', function() {
+      afterSlideAdjust();
+    });
+
+    function autoAdvance() {
+      goToIndex(currentIndex + 1, true);
+    }
+
+    function startAutoAdvance() {
+      stopAutoAdvance();
+      autoTimer = setInterval(autoAdvance, 5000);
+    }
+
+    function stopAutoAdvance() {
+      if (autoTimer) {
+        clearInterval(autoTimer);
+        autoTimer = null;
+      }
+    }
+
+    function restartAutoAdvance() {
+      startAutoAdvance();
+    }
+
+    grid.addEventListener('mouseenter', stopAutoAdvance);
+    grid.addEventListener('mouseleave', startAutoAdvance);
+
+    window.addEventListener('resize', function() {
+      updateSlideWidth();
+    });
+
+    // Initial render
+    buildDots();
+    mountTrack();
+    updateSlideWidth();
+    setActiveDotByIndex(currentIndex);
+    if (typeof initializeVideoTooltips === 'function') {
+      initializeVideoTooltips();
+    }
+    if (typeof window.observeVideosForAutoplay === 'function') {
+      window.observeVideosForAutoplay('#gallery-grid video');
+    }
+    startAutoAdvance();
+  </script>
+  
+</body>
+</html>
+<!-- 
 <div class="video-item" data-condition-image="./static/gallery/realestate_stylized/0541_stylized.png" data-condition-text="">
     <video poster="" controls muted loop height="100%" preload="metadata">
         <source src="./static/gallery/realestate_stylized/0541_stylized.mp4" type="video/mp4">
@@ -570,4 +898,4 @@
     <video poster="" controls muted loop height="100%" preload="metadata">
         <source src="./static/gallery/dl3dv_stylized/0025_stylized.mp4" type="video/mp4">
     </video>
-</div>
+</div> -->

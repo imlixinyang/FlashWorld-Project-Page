@@ -90,33 +90,35 @@ window.addEventListener('scroll', function() {
     }
 });
 
-// Video carousel autoplay when in view
-function setupVideoCarouselAutoplay() {
-    const carouselVideos = document.querySelectorAll('.results-carousel video');
-    
-    if (carouselVideos.length === 0) return;
-    
-    const observer = new IntersectionObserver((entries) => {
+// Video autoplay when in view (carousel and gallery grid)
+let __videoAutoplayObserver__ = null;
+function getVideoAutoplayObserver() {
+    if (__videoAutoplayObserver__) return __videoAutoplayObserver__;
+    __videoAutoplayObserver__ = new IntersectionObserver((entries) => {
         entries.forEach(entry => {
             const video = entry.target;
             if (entry.isIntersecting) {
-                // Video is in view, play it
                 video.play().catch(e => {
-                    // Autoplay failed, probably due to browser policy
-                    console.log('Autoplay prevented:', e);
+                    // Autoplay might be blocked by policy
                 });
             } else {
-                // Video is out of view, pause it
                 video.pause();
             }
         });
-    }, {
-        threshold: 0.5 // Trigger when 50% of the video is visible
-    });
-    
-    carouselVideos.forEach(video => {
-        observer.observe(video);
-    });
+    }, { threshold: 0.5 });
+    return __videoAutoplayObserver__;
+}
+
+function setupVideoCarouselAutoplay() {
+    const observer = getVideoAutoplayObserver();
+    const videos = document.querySelectorAll('.results-carousel video, #gallery-grid video');
+    videos.forEach(video => observer.observe(video));
+}
+
+// Expose helper to observe newly inserted gallery videos after pagination
+window.observeVideosForAutoplay = function(selector) {
+    const observer = getVideoAutoplayObserver();
+    document.querySelectorAll(selector).forEach(v => observer.observe(v));
 }
 
 $(document).ready(function() {
